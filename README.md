@@ -19,6 +19,6 @@ The following list shows who can commit.
 LICENSE
 ---------
 
-Copyright 2015 sekaiamber(Xu Xiaomeng)
+Copyright 2015 Xu Xiaomeng(@sekaiamber)
 
 Released under the MIT and GPL (version 2 or later) Licenses.
