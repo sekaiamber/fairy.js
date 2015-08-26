@@ -20,6 +20,7 @@
 
     // get selector, we can use jQuery if there is :)
     var $ = window.jQuery || (function (document) {
+        // just like jQuery Dom object, our rule is `get first, set all`
         function DOMelements (doms) {
             this.doms = doms;
             this.css = function(name, value) {
