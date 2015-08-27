@@ -42,20 +42,20 @@ body
 
 .board2
 {
-    width: 800px;
-    height: 600px;
+    width: 1000px;
+    height: 400px;
     position: absolute;
-    top: 50px;
+    top: 150px;
     left: 1000px;
     background: lightpink;
 }
 
 .board3
 {
-    width: 800px;
-    height: 600px;
+    width: 300px;
+    height: 300px;
     position: absolute;
-    top: 700px;
-    left: 500px;
+    top: 606px;
+    left: 946px;
     background: lightgreen;
 }

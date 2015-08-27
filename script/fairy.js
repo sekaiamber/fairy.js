@@ -89,6 +89,27 @@
                     return undefined;
                 };
             };
+            this.height = function() {
+                if (this.doms.length > 0) {
+                    return this.doms[0].clientHeight;
+                } else {
+                    return undefined;
+                };
+            };
+            this.outerWidth = function() {
+                if (this.doms.length > 0) {
+                    return this.doms[0].offsetWidth;
+                } else {
+                    return undefined;
+                };
+            };
+            this.outerHeight = function() {
+                if (this.doms.length > 0) {
+                    return this.doms[0].offsetHeight;
+                } else {
+                    return undefined;
+                };
+            };
         };
         return function(selector, context) {
             if (selector.DOMelements) {
@@ -127,8 +148,27 @@
         getDomCenter: function(dom) {
             dom = $(dom);
             var ret = dom.offset();
-
+            ret.top += dom.outerHeight() / 2;
+            ret.left += dom.outerWidth() / 2;
             return ret;
+        },
+        getTransform: function(center, width, height, winWidth, winHeight) {
+            var ret = {
+                X: 0,
+                Y: 0,
+                Z: 0,
+                rX: 0,
+                rY: 0,
+                rZ: 0,
+                scale: 1
+            };
+            ret.X = Math.floor(winWidth / 2 - center.left);
+            ret.Y = Math.floor(winHeight / 2 - center.top);
+            ret.scale = Math.min(winWidth * 0.9 / width, winHeight * 0.9 / height);
+            return ret;
+        },
+        getTransformCss: function(trans) {
+            return 'rotateX(' + trans.rX + 'deg) rotateY(' + trans.rY + 'deg) rotateZ(' + trans.rZ + 'deg) translate3d(' + trans.X + 'px, ' + trans.Y + 'px, ' + trans.Z + 'px) scale(' + trans.scale + ')'
         }
     };
 
@@ -166,7 +206,7 @@
             document.getElementsByTagName('head')[0].appendChild(css);
             // set root
             root = root || '#fairy';
-            this.root = $(root).doms[0];
+            this.root = $(root).first();
             // set canvas
             this.canvas = document.createElement("div");
             this.canvas.className = 'fairy-canvas';
@@ -187,8 +227,11 @@
                 return a['index'] - b['index'];
             });
             // append canvas to root
-            this.root.appendChild(this.canvas);
+            this.root.doms[0].appendChild(this.canvas);
+            this.canvas = $(this.canvas);
 
+            var transitionCss = helper.getSpecificCss('transition', 'all 1000ms ease-in-out 500ms');
+            this.canvas.css(transitionCss);
             // we set `inited` to `true`
             this.inited = true;
         },
@@ -220,7 +263,11 @@
         goto: function(index) {
             var dom = this.presentation[index].dom;
             var center = helper.getDomCenter(dom);
-            console.log(center);
+            var tranOriginCss = helper.getSpecificCss('transform-origin', center.left + 'px ' + center.top + 'px');
+            var trans = helper.getTransform(center, dom.outerWidth(), dom.outerHeight(), this.data.width, this.data.height);
+            var transCss = helper.getSpecificCss('transform', helper.getTransformCss(trans));
+            this.canvas.css(tranOriginCss);
+            this.canvas.css(transCss);
         },
         support: function() {
             // ==TODO==
