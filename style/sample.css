@@ -1,0 +1,61 @@
+html,
+body
+{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+/*#fairy
+{
+    overflow: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#fairy .fairy-canvas
+{
+    position: relative;
+    transform-origin: 1400px, 350px;
+    -ms-transform-origin: 1400px, 350px;
+    -moz-transform-origin: 1400px, 350px;
+    -webkit-transform-origin: 1400px, 350px;
+    -o-transform-origin: 1400px, 350px;
+    transform: translate3d(-800px, 0px, 0px) scale(1);
+    -ms-transform:translate3d(-800px, 0px, 0px) scale(1);
+    -moz-transform:translate3d(-800px, 0px, 0px) scale(1);
+    -webkit-transform:translate3d(-800px, 0px, 0px) scale(1);
+    -o-transform:translate3d(-800px, 0px, 0px) scale(1);   
+}*/
+.board1
+{
+    width: 800px;
+    height: 600px;
+    position: absolute;
+    top: 50px;
+    left: 100px;
+    background: lightblue;
+}
+
+.board2
+{
+    width: 1000px;
+    height: 400px;
+    position: absolute;
+    top: 150px;
+    left: 1000px;
+    background: lightpink;
+}
+
+.board3
+{
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    top: 606px;
+    left: 946px;
+    background: lightgreen;
+}
