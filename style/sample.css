@@ -59,3 +59,25 @@ body
     left: 946px;
     background: lightgreen;
 }
+
+.board4
+{
+    width: 450px;
+    height: 450px;
+    position: absolute;
+    top: 760px;
+    left: 409px;
+    background: lightcyan;
+ /*   transform: rotateY(70deg);
+    -ms-transform:rotateY(70deg);
+    -moz-transform:rotateY(70deg);
+    -webkit-transform:rotateY(70deg);
+    -o-transform:rotateY(70deg);*/
+
+
+    /*transform: rotateX(-40deg) rotateY(10deg) rotateZ(0deg);*/
+    transform: rotateX(16deg) rotateZ(40deg);
+
+
+    transform-style: preserve-3d;
+}
