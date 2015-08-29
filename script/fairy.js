@@ -13,7 +13,6 @@
 (function (document, window) {
     // face the future
     'use strict';
-    // convert a array-like element to a real array
 
     // get selector
     var $ = (function (document) {
@@ -139,13 +138,37 @@
         + '#fairy .fairy-canvas{position:relative;}'
         + '#fairy .fairy-camera{position:absolute;left:50%;top:50%;}';
 
+    function transData() {
+        this.X = 0;
+        this.Y = 0;
+        this.Z = 0;
+        this.rX = 0;
+        this.rY = 0;
+        this.rZ = 0;
+        this.scale = 1;
+        this.perspective = 1000;
+        this.clone = function() {
+            var ret = new transData();
+            ret.X = this.X;
+            ret.Y = this.Y;
+            ret.Z = this.Z;
+            ret.rX = this.rX;
+            ret.rY = this.rY;
+            ret.rZ = this.rZ;
+            ret.scale = this.scale;
+            return ret;
+        };
+    };
+
     // here is the helper
     var helper = {
         reach: /[^, ]+/g,
         cssprefix: '-ms-,-moz-,-webkit-,-o-',
+        // convert a array-like element to a real array
         arrayify: function (a) {
             return [].slice.call(a);
         },
+        // using `cssprefix` to set a list of css
         getSpecificCss: function(name, value) {
             var ret = {};
             ret[name] = value;
@@ -154,40 +177,25 @@
             });
             return ret;
         },
-        getDomCenter: function(dom) {
-            dom = $(dom);
-            var ret = dom.offset();
-            ret.top += dom.outerHeight() / 2;
-            ret.left += dom.outerWidth() / 2;
-            return ret;
-        },
-        getTransform: function(center, width, height, winWidth, winHeight, trans, rotate) {
-            var ret = {
-                X: 0,
-                Y: 0,
-                Z: 0,
-                rX: 0,
-                rY: 0,
-                rZ: 0,
-                scale: 1
+        // get a `transform` value
+        getTransformString: function(trans, reverse) {
+            reverse = reverse || false;
+            var ret = [
+                'translate3d(' + trans.X + 'px,' + trans.Y + 'px,' + trans.Z +'px)',
+                'rotateX(' + trans.rX + 'deg)',
+                'rotateY(' + trans.rY + 'deg)',
+                'rotateZ(' + trans.rZ + 'deg)'
+            ];
+            if (reverse) {
+                ret.reverse()
             };
-            ret.X = Math.floor(0 - center.left);
-            ret.Y = Math.floor(0 - center.top);
-            ret.scale = Math.min(winWidth * 0.9 / width, winHeight * 0.9 / height);
-            rotate = rotate || {X: 0, Y: 0, Z: 0};
-            ret.rX = 0 - rotate.X;
-            ret.rY = 0 - rotate.Y;
-            ret.rZ = 0 - rotate.Z;
-            return ret;
+            return ret.join(' ');
         },
-        getCanvasCssValue: function(trans) {
-            return 'rotateX(' + trans.rX + 'deg) rotateY(' + trans.rY + 'deg) rotateZ(' + trans.rZ + 'deg) translate3d(' + trans.X + 'px, ' + trans.Y + 'px, ' + trans.Z + 'px)'
-        },
-        getCameraCssValue: function(trans) {
-            return 'scale(' + trans.scale + ')'
+        getCameraCssValue: function(perspective, scale) {
+            return 'perspective(' + perspective + 'px) scale(' + scale + ')'
         },
         // https://github.com/JordanDelcros/Jo/blob/master/jo/jo.js
-        readTransformRotate: function(dom) {
+        readDomTransformRotate: function(dom) {
             var t = helper.getSpecificCss('transform');
             dom = $(dom);
             var value = undefined;
@@ -234,11 +242,39 @@
                     ret.Z = Math.asin(vs[1]);
                 };
             };
-            ret.X = (ret.X * 180 / Math.PI).toFixed(4);
-            ret.Y = (ret.Y * 180 / Math.PI).toFixed(4);
-            ret.Z = (ret.Z * 180 / Math.PI).toFixed(4);
+            ret.X = ret.X * 180 / Math.PI;
+            ret.Y = ret.Y * 180 / Math.PI;
+            ret.Z = ret.Z * 180 / Math.PI;
             return ret;
-        }
+        },
+        readDomCenter: function(dom) {
+            dom = $(dom);
+            var ret = dom.offset();
+            ret.top += dom.outerHeight() / 2;
+            ret.left += dom.outerWidth() / 2;
+            return ret;
+        },
+        readDomTransform: function(dom) {
+            dom = $(dom);
+            var rotate = helper.readDomTransformRotate(dom);
+            var center = helper.readDomCenter(dom);
+            var trans = new transData();
+            trans.X = parseInt(center.left);
+            trans.Y = parseInt(center.top);
+            trans.rX = Math.round(rotate.X);
+            trans.rY = Math.round(rotate.Y);
+            trans.rZ = Math.round(rotate.Z);
+            return trans;
+        },
+        buildItemCss: function(dom) {
+            var trans = new helper.readDomTransform(dom);
+            var css = 'translate(-50%, -50%) ' + helper.getTransformString(trans) + ' scale(1)';
+            css = helper.getSpecificCss('transform', css);
+            dom.css('left', '0px');
+            dom.css('top', '0px');
+            dom.css(css);
+            return trans;
+        },
     };
 
     // here is all apis we use
@@ -251,7 +287,7 @@
         data: {
             width: 1024,
             height: 768,
-            scale: 1,
+            scale: 0.9,
             perspective: 1000,
             transitionDuration: 1000,
             current: -1
@@ -304,13 +340,6 @@
             this.camera.appendChild(this.canvas);
             this.camera = $(this.camera);
             this.canvas = $(this.canvas);
-
-            // debug
-            var arc = document.createElement("div");
-            arc.className = 'fairy-arc';
-            this.canvas.doms[0].appendChild(arc);
-
-
             // css
             var orignCss = helper.getSpecificCss('transform-origin', 'left top 0px');
             this.canvas.css(orignCss);
@@ -318,9 +347,19 @@
             var transStyleCss = helper.getSpecificCss('transform-style', 'preserve-3d');
             this.canvas.css(transStyleCss);
             this.camera.css(transStyleCss);
-            $('.step').css(transStyleCss);
-            // var transitionCss = helper.getSpecificCss('transition', 'all 1000ms ease-in-out 500ms');
-            // this.canvas.css(transitionCss);
+            for (var i = 0; i < this.presentation.length; i++) {
+                var $this = this.presentation[i].dom;
+                $this.css(transStyleCss);
+                var trans = helper.buildItemCss($this);
+                trans.perspective = this.data.perspective;
+                this.presentation[i].trans = trans;
+            };
+            // goto 1st presentation
+            this.goto(0);
+            // then set `transition`
+            var transitionCss = helper.getSpecificCss('transition', 'all 1000ms ease-in-out 500ms');
+            this.canvas.css(transitionCss);
+            this.camera.css(transitionCss);
             // we set `inited` to `true`
             this.inited = true;
         },
@@ -351,16 +390,22 @@
         },
         goto: function(index) {
             var dom = this.presentation[index].dom;
-            var center = helper.getDomCenter(dom);
-            var rotate = helper.readTransformRotate(dom);
-            console.log(rotate);
-            var trans = helper.getTransform(center, dom.outerWidth(), dom.outerHeight(), this.data.width, this.data.height, rotate);
-            console.log(trans);
-            
-            var transCanvasCss = helper.getSpecificCss('transform', helper.getCanvasCssValue(trans));
-            var transCameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(trans));
-            this.canvas.css(transCanvasCss);
-            this.camera.css(transCameraCss);
+            var trans = this.presentation[index].trans.clone();
+            // negative the transform
+            trans.X = 0 - trans.X;
+            trans.Y = 0 - trans.Y;
+            trans.Z = 0 - trans.Z;
+            trans.rX = 0 - trans.rX;
+            trans.rY = 0 - trans.rY;
+            trans.rZ = 0 - trans.rZ;
+            var canvasCss = helper.getSpecificCss('transform', helper.getTransformString(trans, true));
+            this.canvas.css(canvasCss);
+            // calculate the perspective and scale
+            var scaling = Math.min(this.data.width * this.data.scale / dom.outerWidth(), this.data.height * this.data.scale / dom.outerHeight(), 1);
+            var p = trans.perspective / scaling;
+            var s = this.data.perspective / p;
+            var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(p, s));
+            this.camera.css(cameraCss);
         },
         support: function() {
             // ==TODO==
@@ -369,6 +414,7 @@
             return s;
         },
         _initData: function() {
+            // ==TODO==
             this.data['width'] = document.body.clientWidth;
             this.data['height'] = document.body.clientHeight;
         },
@@ -397,7 +443,6 @@
     };
 
     window.fairy = fairy;
-
 
     // ==TODO==
     // delete if complate
