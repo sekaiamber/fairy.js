@@ -49,6 +49,32 @@
                 };
                 return this;
             };
+            this._hasClass = function(dom, name) {
+                return -1 < (" " + dom.className + " ").indexOf(" " + name + " ");
+            };
+            this.hasClass = function(name) {
+                if (this.doms.length > 0) {
+                    return this._hasClass(this.doms[0], name);
+                };
+                return false;
+            };
+            this.addClass = function(name) {
+                for (var i = 0; i < this.doms.length; i++) {
+                    var d = this.doms[i];
+                    if (!this._hasClass(d, name)) {
+                        d.className += d.className ? " " + name : name;
+                    };
+                }
+            };
+            this.removeClass = function(name) {
+                for (var i = 0; i < this.doms.length; i++) {
+                    var d = this.doms[i];
+                    if (this._hasClass(d, name)) {
+                        var reg = new RegExp('(\\s|^)' + name + '(\\s|$)');
+                        d.className = d.className.replace(reg, "");
+                    };
+                }
+            };
             this.attr = function(name, value) {
                 if (value == '') {
                     for (var i = 0; i < this.doms.length; i++) {
@@ -156,6 +182,7 @@
             ret.rY = this.rY;
             ret.rZ = this.rZ;
             ret.scale = this.scale;
+            ret.perspective = this.perspective;
             return ret;
         };
     };
@@ -167,6 +194,18 @@
         // convert a array-like element to a real array
         arrayify: function (a) {
             return [].slice.call(a);
+        },
+        // throttling function calls, by Remy Sharp
+        // http://remysharp.com/2010/07/21/throttling-function-calls/
+        throttle: function (fn, delay) {
+            var timer = null;
+            return function () {
+                var context = this, args = arguments;
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    fn.apply(context, args);
+                }, delay);
+            };
         },
         // using `cssprefix` to set a list of css
         getSpecificCss: function(name, value) {
@@ -195,16 +234,12 @@
             return 'perspective(' + perspective + 'px) scale(' + scale + ')'
         },
         // https://github.com/JordanDelcros/Jo/blob/master/jo/jo.js
-        readDomTransformRotate: function(dom) {
-            var t = helper.getSpecificCss('transform');
-            dom = $(dom);
-            var value = undefined;
-            for(var name in t) {
-                value = dom.css(name);
-                if (value) {
-                    break;
-                };
-            };
+        // matrix3d
+        // 0:m11, 4:m12, 8 :m13, 12:m14
+        // 1:m21, 5:m22, 9 :m23, 13:m24
+        // 2:m31, 6:m32, 10:m33, 14:m34
+        // 3:m41, 7:m42, 11:m43, 15:m44
+        readDomTransformRotate: function(value) {
             var ret = {
                 X: 0,
                 Y: 0,
@@ -219,10 +254,6 @@
                 };
                 if (value.indexOf('matrix3d') != -1) {
                     // matrix3d
-                    // 0:m11, 4:m12, 8 :m13, 12:m14
-                    // 1:m21, 5:m22, 9 :m23, 13:m24
-                    // 2:m31, 6:m32, 10:m33, 14:m34
-                    // 3:m41, 7:m42, 11:m43, 15:m44
                     // x = atan2(m23, m33)
                     // y = asin(-m13)
                     // z = atan2(m12, m11)
@@ -247,6 +278,32 @@
             ret.Z = ret.Z * 180 / Math.PI;
             return ret;
         },
+        readDomTransformTranslate: function(value) {
+            var ret = {
+                X: 0,
+                Y: 0,
+                Z: 0
+            };
+            if (value && value.indexOf('matrix') != -1) {
+                value = value.toLowerCase();
+                value = value.replace(' ', '');
+                var vs = value.split('(')[1].split(')')[0].split(',');
+                for (var i = 0; i < vs.length; i++) {
+                    vs[i] = Number(vs[i]);
+                };
+                if (value.indexOf('matrix3d') != -1) {
+                    // matrix3d
+                    ret.X = vs[12];
+                    ret.Y = vs[13];
+                    ret.Z = vs[14];
+                } else {
+                    // matrix, only translateX and translateY
+                    ret.X = vs[4];
+                    ret.Y = vs[5];
+                };
+            };
+            return ret;
+        },
         readDomCenter: function(dom) {
             dom = $(dom);
             var ret = dom.offset();
@@ -256,11 +313,21 @@
         },
         readDomTransform: function(dom) {
             dom = $(dom);
-            var rotate = helper.readDomTransformRotate(dom);
+            var t = helper.getSpecificCss('transform');
+            var value = undefined;
+            for(var name in t) {
+                value = dom.css(name);
+                if (value) {
+                    break;
+                };
+            };
+            var rotate = helper.readDomTransformRotate(value);
+            var translate = helper.readDomTransformTranslate(value);
             var center = helper.readDomCenter(dom);
             var trans = new transData();
-            trans.X = parseInt(center.left);
-            trans.Y = parseInt(center.top);
+            trans.X = parseInt(center.left + translate.X);
+            trans.Y = parseInt(center.top + translate.Y);
+            trans.Z = parseInt(translate.Z);
             trans.rX = Math.round(rotate.X);
             trans.rY = Math.round(rotate.Y);
             trans.rZ = Math.round(rotate.Z);
@@ -290,18 +357,21 @@
             scale: 0.9,
             perspective: 1000,
             transitionDuration: 1000,
-            current: -1
+            current: -1,
+            root: '#fairy'
         },
         presentation: [],
         staticApis: [
-            'init', 'support'
+            'init', 'support', 'make'
         ],
-        init: function(root) {
+        steps: null,
+        // `make` mode is to allow user to make presentation WYSIWYG.
+        make: function(opts) {
             if (!this.support()) {
                 throw new Error("[fairy.js]: Your broswer is not support fairy.");
             };
             // init data
-            this._initData();
+            this._initData(opts);
             // add css
             var css = document.createElement('style');
             if (css.styleSheet) {
@@ -311,8 +381,55 @@
             };
             document.getElementsByTagName('head')[0].appendChild(css);
             // set root
-            root = root || '#fairy';
-            this.root = $(root).first();
+            this.root = $(this.data.root).first();
+            this.root.css('overflow', 'auto');
+            // set canvas
+            this.canvas = document.createElement("div");
+            this.canvas.className = 'fairy-canvas';
+            // set camera
+            this.camera = document.createElement("div");
+            this.camera.className = 'fairy-camera';
+            // append canvas to camera, append camera to root
+            this.root.doms[0].appendChild(this.camera);
+            this.camera.appendChild(this.canvas);
+            this.camera = $(this.camera);
+            this.canvas = $(this.canvas);
+            // css
+            var orignCss = helper.getSpecificCss('transform-origin', 'left top 0px');
+            this.canvas.css(orignCss);
+            this.camera.css(orignCss);
+            var transStyleCss = helper.getSpecificCss('transform-style', 'preserve-3d');
+            this.canvas.css(transStyleCss);
+            this.camera.css(transStyleCss);
+            this.steps = $('.fairy-step');
+            this.steps.each(function(i) {
+                var $this = $(this);
+                var si = Number($this.attr('step-index'));
+                if (isNaN(si)) {
+                    throw new Error("[fairy.js]: `step-index` should be a number.");
+                };
+                apis.canvas.doms[0].appendChild(this);
+                $this.css(transStyleCss);
+            });
+            var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(this.data.perspective, 1));
+            this.camera.css(cameraCss);
+        },
+        init: function(opts) {
+            if (!this.support()) {
+                throw new Error("[fairy.js]: Your broswer is not support fairy.");
+            };
+            // init data
+            this._initData(opts);
+            // add css
+            var css = document.createElement('style');
+            if (css.styleSheet) {
+                css.styleSheet.cssText = _css;
+            } else {
+                css.appendChild(document.createTextNode(_css));
+            };
+            document.getElementsByTagName('head')[0].appendChild(css);
+            // set root
+            this.root = $(this.data.root).first();
             // set canvas
             this.canvas = document.createElement("div");
             this.canvas.className = 'fairy-canvas';
@@ -320,7 +437,8 @@
             this.camera = document.createElement("div");
             this.camera.className = 'fairy-camera';
             // sort out step-index
-            $('.step').each(function(i) {
+            this.steps = $('.fairy-step');
+            this.steps.each(function(i) {
                 var $this = $(this);
                 var si = Number($this.attr('step-index'));
                 if (isNaN(si)) {
@@ -329,7 +447,8 @@
                 apis.canvas.appendChild(this);
                 apis.presentation.push({
                     index: si,
-                    dom: $this
+                    dom: $this,
+                    id: this.id
                 });
             });
             this.presentation.sort(function (a, b){
@@ -357,7 +476,7 @@
             // goto 1st presentation
             this.goto(0);
             // then set `transition`
-            var transitionCss = helper.getSpecificCss('transition', 'all 1000ms ease-in-out 500ms');
+            var transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out');
             this.canvas.css(transitionCss);
             this.camera.css(transitionCss);
             // we set `inited` to `true`
@@ -378,7 +497,7 @@
                 this.goto(current);
             }
         },
-        prep: function() {
+        prev: function() {
             var current = this.data.current;
             if (current == 0) {
                 return;
@@ -406,6 +525,18 @@
             var s = this.data.perspective / p;
             var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(p, s));
             this.camera.css(cameraCss);
+
+            // class
+            dom.addClass('showed');
+            this.steps.removeClass('current');
+            dom.addClass('current');
+            for (var i = 0; i < this.presentation.length; i++) {
+                var id = 'fairy-on-' + this.presentation[i].id;
+                this.root.removeClass(id);
+            };
+            if (this.presentation[index].id) {
+                this.root.addClass('fairy-on-' + this.presentation[index].id);
+            };
         },
         support: function() {
             // ==TODO==
@@ -413,10 +544,50 @@
             this.supported = s;
             return s;
         },
-        _initData: function() {
+        _initData: function(opts) {
             // ==TODO==
-            this.data['width'] = document.body.clientWidth;
-            this.data['height'] = document.body.clientHeight;
+            this.data.width = document.body.clientWidth;
+            this.data.height = document.body.clientHeight;
+
+            // merge options
+            if (opts) {
+                for(var name in opts) {
+                    if (this.data[name]) {
+                        this.data[name] = opts[name];
+                    };
+                }
+            };
+            // rescale presentation when window is resized
+            window.addEventListener("resize", helper.throttle(function () {
+                apis.data.width = document.body.clientWidth;
+                apis.data.height = document.body.clientHeight;
+                apis.goto(apis.data.current);
+            }, 250), false);
+            // Prevent default keydown action when one of supported key is pressed.
+            document.addEventListener("keydown", function ( event ) {
+                if (( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
+                    event.preventDefault();
+                }
+            }, false);
+            document.addEventListener("keyup", function ( event ) {
+                if (( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
+                    switch( event.keyCode ) {
+                        case 33: // pg up
+                        case 37: // left
+                        case 38: // up
+                                 apis.prev();
+                                 break;
+                        case 32: // space
+                        case 34: // pg down
+                        case 39: // right
+                        case 40: // down
+                                 apis.next();
+                                 break;
+                    }
+                    
+                    event.preventDefault();
+                }
+            }, false);
         },
     };
 
@@ -444,8 +615,5 @@
 
     window.fairy = fairy;
 
-    // ==TODO==
-    // delete if complate
     window.$ = $;
-
 })(document, window)
