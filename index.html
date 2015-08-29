@@ -6,6 +6,8 @@
     <title>fairy.js | by sekaiamber</title>
     <meta name="author" content="sekaiamber(Xu Xiaomeng)" />
     <link href="style/sample.css" rel="stylesheet" />
+    <script src="script/fairy.js"></script>
+    <script src="script/jquery-1.11.1.min.js"></script>
 <!--
     ==TODO==
     <link rel="shortcut icon" href="favicon.png" />
@@ -14,16 +16,30 @@
 <body>
 
     <div id="fairy">
-        <div class="fairy-step board1" step-index="1">first</div>
-        <div class="fairy-step board2" step-index="2">second</div>
-        <div class="fairy-step board3" step-index="3">third</div>
-        <div class="fairy-step board4" step-index="4" id="test">fourth</div>
+        <div class="fairy-step front front1" step-index="1">使用←和→来控制</div>
+        <div class="fairy-step front front2" step-index="2">这个项目来源于[<a href="https://prezi.com/">Prezi</a>]，一个极其优秀又独特的演示文稿软件</div>
+        <div class="fairy-step front front3" step-index="3">参考了许多有用的库，特别感谢的是<b>impress.js</b></div>
+        <div class="fairy-step front front4" step-index="4">用自己的想法重新实现了这个，获益良多</div>
+        <div class="fairy-step front front5" step-index="5">So, Go ahead :)</div>
+        <div class="fairy-step board" step-index="6" id="board1">你是否<b>厌倦</b>了这种线性的演示文稿？</div>
+ <!--        <div class="fairy-step board" step-index="7" id="board2">So, Go ahead :)</div>
+        <div class="fairy-step board" step-index="8" id="board3">So, Go ahead :)</div> -->
+
     </div>
-    <script src="script/fairy.js"></script>
     <script>
         fairy('init', {
             perspective: 1000,
-            transitionDuration: 1000
+            transitionDuration: 1000,
+            events: {
+                change: function(dom, index) {
+                    $(".fairy-step").removeClass('show');
+                    if (index < 6) {
+                        $(".fairy-step.front").addClass('show');
+                    } else if (index < 10) {
+                        $(".fairy-step.board").addClass('show');
+                    };
+                }
+            }
         })('start');
         // fairy('make');
     </script>
