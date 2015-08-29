@@ -12,15 +12,20 @@
 -->
 </head>
 <body>
+
     <div id="fairy">
-        <div class="step board1" step-index="2">first</div>
-        <div class="step board2" step-index="1">second</div>
-        <div class="step board3" step-index="3">third</div>
-        <div class="step board4" step-index="2">fourth</div>
+        <div class="fairy-step board1" step-index="1">first</div>
+        <div class="fairy-step board2" step-index="2">second</div>
+        <div class="fairy-step board3" step-index="3">third</div>
+        <div class="fairy-step board4" step-index="4" id="test">fourth</div>
     </div>
     <script src="script/fairy.js"></script>
     <script>
-        fairy('init')('start');
+        fairy('init', {
+            perspective: 1000,
+            transitionDuration: 1000
+        })('start');
+        // fairy('make');
     </script>
 </body>
 </html>

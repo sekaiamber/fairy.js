@@ -45,5 +45,22 @@ body
     top: 760px;
     left: 409px;
     background: lightcyan;
-    transform: rotateX(-40deg) rotateY(10deg) rotateZ(0deg);
+    transform: translate3d(0px,0,-2000px) rotateX(-40deg) rotateY(10deg) rotateZ(0deg);
+}
+
+/*
+* some style
+*/
+.fairy-step
+{
+    opacity: .3;
+    -webkit-transition: opacity 1s;
+    -moz-transition: opacity 1s;
+    -ms-transition: opacity 1s;
+    -o-transition: opacity 1s;
+    transition: opacity 1s;
+}
+.fairy-step.current
+{
+    opacity: 1;
 }
