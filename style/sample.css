@@ -7,29 +7,6 @@ body
     width: 100%;
 }
 
-/*#fairy
-{
-    overflow: hidden;
-    position: relative;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-}
-#fairy .fairy-canvas
-{
-    position: relative;
-    transform-origin: 1400px, 350px;
-    -ms-transform-origin: 1400px, 350px;
-    -moz-transform-origin: 1400px, 350px;
-    -webkit-transform-origin: 1400px, 350px;
-    -o-transform-origin: 1400px, 350px;
-    transform: translate3d(-800px, 0px, 0px) scale(1);
-    -ms-transform:translate3d(-800px, 0px, 0px) scale(1);
-    -moz-transform:translate3d(-800px, 0px, 0px) scale(1);
-    -webkit-transform:translate3d(-800px, 0px, 0px) scale(1);
-    -o-transform:translate3d(-800px, 0px, 0px) scale(1);   
-}*/
 .board1
 {
     width: 800px;
@@ -58,4 +35,15 @@ body
     top: 606px;
     left: 946px;
     background: lightgreen;
+}
+
+.board4
+{
+    width: 450px;
+    height: 450px;
+    position: absolute;
+    top: 760px;
+    left: 409px;
+    background: lightcyan;
+    transform: rotateX(-40deg) rotateY(10deg) rotateZ(0deg);
 }
