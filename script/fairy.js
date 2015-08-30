@@ -49,8 +49,13 @@
                 };
                 return this;
             };
+            // class operatings copy from jQuery
+            this.uc = /[\t\r\n\f]/g;
+            this.E = /\S+/g;
             this._hasClass = function(dom, name) {
-                return -1 < (" " + dom.className + " ").indexOf(" " + name + " ");
+                if((" "+dom.className+" ").replace(this.uc," ").indexOf(" " + name + " ")>=0)
+                    return!0;
+                return!1;
             };
             this.hasClass = function(name) {
                 if (this.doms.length > 0) {
@@ -59,21 +64,28 @@
                 return false;
             };
             this.addClass = function(name) {
-                for (var i = 0; i < this.doms.length; i++) {
-                    var d = this.doms[i];
-                    if (!this._hasClass(d, name)) {
-                        d.className += d.className ? " " + name : name;
-                    };
-                }
+                var b,c,d,e,f,g,h=0,
+                i=this.doms.length;
+                for(b=(name||"").match(this.E)||[];i>h;h++)
+                    c=this.doms[h];
+                    if(d=1===c.nodeType&&(c.className?(" "+c.className+" ").replace(this.uc," "):" ")){
+                        f=0;
+                        while(e=b[f++])
+                            d.indexOf(" "+e+" ")<0&&(d+=e+" ");
+                        g=helper.trim(d),c.className!==g&&(c.className=g)
+                    }
             };
             this.removeClass = function(name) {
-                for (var i = 0; i < this.doms.length; i++) {
-                    var d = this.doms[i];
-                    if (this._hasClass(d, name)) {
-                        var reg = new RegExp('(\\s|^)' + name + '(\\s|$)');
-                        d.className = d.className.replace(reg, "");
-                    };
-                }
+                var b,c,d,e,f,g,h=0,
+                i=this.doms.length;
+                for(b=(name||"").match(this.E)||[];i>h;h++)
+                    if(c=this.doms[h],d=1===c.nodeType&&(c.className?(" "+c.className+" ").replace(this.uc," "):"")){
+                        f=0;
+                        while(e=b[f++])
+                            while(d.indexOf(" "+e+" ")>=0)
+                                d=d.replace(" "+e+" "," ");
+                            g=name?helper.trim(d):"",c.className!==g&&(c.className=g)
+                    }
             };
             this.attr = function(name, value) {
                 if (value == '') {
@@ -190,11 +202,13 @@
     // here is the helper
     var helper = {
         reach: /[^, ]+/g,
+        rtrim: /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
         cssprefix: '-ms-,-moz-,-webkit-,-o-',
         // convert a array-like element to a real array
         arrayify: function (a) {
             return [].slice.call(a);
         },
+        trim: function (a){return null==a?"":(a+"").replace(helper.rtrim,"")},
         // throttling function calls, by Remy Sharp
         // http://remysharp.com/2010/07/21/throttling-function-calls/
         throttle: function (fn, delay) {
@@ -210,10 +224,10 @@
         // using `cssprefix` to set a list of css
         getSpecificCss: function(name, value) {
             var ret = {};
-            ret[name] = value;
             helper.cssprefix.replace(helper.reach, function (prefix) {
                 ret[prefix + name] = value;
             });
+            ret[name] = value;
             return ret;
         },
         // get a `transform` value
@@ -367,6 +381,7 @@
         ],
         steps: null,
         events: {},
+        stepEnterTimeout: null,
         // `make` mode is to allow user to make presentation WYSIWYG.
         make: function(opts) {
             if (!this.support()) {
@@ -540,6 +555,12 @@
             if (this.presentation[index].id) {
                 this.root.addClass('fairy-on-' + this.presentation[index].id);
             };
+            window.clearTimeout(this.stepEnterTimeout);
+            this.stepEnterTimeout = window.setTimeout(function() {
+                apis.steps.removeClass('trans-finish');
+                apis.presentation[apis.data.current].dom.addClass('trans-finish');
+            }, this.data.transitionDuration);
+
             
             // event
             if (this.events[this.presentation[index].event]) {
