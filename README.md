@@ -9,12 +9,22 @@ It's a presentation framework based on the power of CSS3 transforms and transiti
 version is built in this format: vx.y[.z]
 
 x: API version changed, tech stack changed.
+
 y: New feature/api introduced, Code architecture changed.
+
 z: bug fixed, small feature/improvment.
 
 ## Who can commit
+
 The following list shows who can commit.
+
 * sekaiamber
+
+But all contributions are welcome.
+
+You can just fork this project. Or raise a [issue](https://github.com/sekaiamber/fairy.js/issues).
+
+Make a pull request, take it easy :)
 
 ## Change log
 
