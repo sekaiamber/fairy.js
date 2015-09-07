@@ -7,7 +7,7 @@
  *
  * ------------------------------------------------
  *  author:  Xu Xiaomeng
- *  version: 0.0.1
+ *  version: 0.1.0
  *  source:  github.com/sekaiamber/fairy.js
  */
 (function (document, window) {
@@ -376,6 +376,7 @@
             root: '#fairy'
         },
         presentation: [],
+        indices: {},
         staticApis: [
             'init', 'support', 'make'
         ],
@@ -457,21 +458,36 @@
             this.steps = $$('.fairy-step');
             this.steps.each(function(i) {
                 var $this = $$(this);
-                var si = Number($this.attr('step-index'));
-                if (isNaN(si)) {
-                    throw new Error("[fairy.js]: `step-index` should be a number.");
+                var sia = $this.attr('step-index').split(',');
+                for (var i = 0; i < sia.length; i++) {
+                    sia[i] = Number(helper.trim(sia[i]));
+                    if (isNaN(sia[i])) {
+                        throw new Error("[fairy.js]: `step-index` should be a number.");
+                    };    
                 };
                 apis.canvas.appendChild(this);
-                apis.presentation.push({
-                    index: si,
-                    dom: $this,
-                    id: this.id,
-                    event: $this.attr('fairy-event'),
-                });
+                for (var i = 0; i < sia.length; i++) {
+                    var si = sia[i];
+                    apis.presentation.push({
+                        index: si,
+                        dom: $this,
+                        id: this.id,
+                        event: $this.attr('fairy-event'),
+                        inited: false,
+                        same: sia
+                    });
+                };
             });
             this.presentation.sort(function (a, b){
                 return a['index'] - b['index'];
             });
+            for (var i = 0; i < this.presentation.length; i++) {
+                var presentation = this.presentation[i];
+                if (this.indices[presentation.index] != undefined) {
+                    throw new Error("[fairy.js]: duplicate index.");
+                };
+                this.indices[presentation.index] = i;
+            };
             // append canvas to camera, append camera to root
             this.root.doms[0].appendChild(this.camera);
             this.camera.appendChild(this.canvas);
@@ -485,11 +501,17 @@
             this.canvas.css(transStyleCss);
             this.camera.css(transStyleCss);
             for (var i = 0; i < this.presentation.length; i++) {
+                if (this.presentation[i].inited) {
+                    continue;
+                };
                 var $this = this.presentation[i].dom;
                 $this.css(transStyleCss);
                 var trans = helper.buildItemCss($this);
                 trans.perspective = this.data.perspective;
-                this.presentation[i].trans = trans;
+                for (var j = 0; j < this.presentation[i].same.length; j++) {
+                    this.presentation[this.indices[this.presentation[i].same[j]]].inited = true;
+                    this.presentation[this.indices[this.presentation[i].same[j]]].trans = trans;
+                };
             };
             // goto 1st presentation
             this.goto(0);
