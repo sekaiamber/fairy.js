@@ -7,7 +7,7 @@
  *
  * ------------------------------------------------
  *  author:  Xu Xiaomeng
- *  version: 0.1.0
+ *  version: 0.2.0
  *  source:  github.com/sekaiamber/fairy.js
  */
 (function (document, window) {
