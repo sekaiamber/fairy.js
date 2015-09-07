@@ -16,8 +16,17 @@ z: bug fixed, small feature/improvment.
 The following list shows who can commit.
 * sekaiamber
 
-LICENSE
----------
+## Change log
+
+### v0.1.0
+
+* support muti-indices for a dom element, using `step-index="1,2,5"` for step 1, 2 and 5 to attach the same dom element.
+
+### v0.0.1
+
+* add base code.
+
+## LICENSE
 
 Copyright 2015 Xu Xiaomeng(@sekaiamber)
 
