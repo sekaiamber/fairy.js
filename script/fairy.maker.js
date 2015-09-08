@@ -1,0 +1,135 @@
+/**
+ * fairy.js
+ *
+ * Copyright 2015 Xu Xiaomeng(@sekaiamber)
+ *
+ * Released under the MIT and GPL Licenses.
+ *
+ * ------------------------------------------------
+ *  author:  Xu Xiaomeng
+ *  version: 0.3.0
+ *  source:  github.com/sekaiamber/fairy.js
+ */
+ (function (fairy, document, window) {
+    // hijack fairy
+    var helper = fairy.helper;
+    var apis = fairy.apis;
+    var $$ = fairy._selector;
+
+    // enhance helper
+    // extend object a and b
+    helper.extend = function(a, b, overwrite, doeach) {
+        overwrite = overwrite || false;
+        for(var e in b) {
+            if (a[e]) {
+                if (overwrite) {
+                    if (doeach) doeach(a, b, e);
+                    a[e] = b[e];
+                };
+            } else {
+                a[e] = b[e];
+            };
+        }
+    };
+    helper.extend(helper, {
+        log: function() {
+            if (console && console.log)
+                for (var i = 0; i < arguments.length; i++)
+                    console.log('[fairy.js]: ' + arguments[i]);
+        }
+    });
+
+    // override functions in apis
+    apis.cssstr = apis.cssstr
+        + "#fairy .fairy-hover{border:1px solid rgba(143,199,76,1);border-radius:5px;box-shadow:0 0 10px rgba(143,199,76,1);}"
+        + "#fairy.fairy-dragging{cursor:move;}";
+    helper.extend(apis, {
+        _: {},
+        drag: {
+            start: false,
+            ing: false,
+            position: {X: 0, Y: 0}
+        },
+        init: function(opts) {
+            helper.log('You are using fairy.maker.js.', 'welcome :)');
+            this._.init.call(this, opts);
+
+            helper.log('disable transition.');
+            var transitionCss = helper.getSpecificCss('transition', '');
+            this.canvas.css(transitionCss);
+            this.camera.css(transitionCss);
+
+            this._initMakerData(opts);
+        },
+        _initMakerData: function(opts) {
+            helper.log('add step event.');
+            for (var i = 0; i < this.presentation.length; i++) {
+                var dom = this.presentation[i].dom.doms[0];
+                dom.addEventListener('mouseup', function (event) {
+                    if (apis.drag.ing) {
+                        return;
+                    };
+                    var target = event.target;
+                    while(!$$(target).hasClass('fairy-step')) {
+                        target = target.parentNode;
+                    };
+                    var $this = $$(target);
+                    apis.goto(apis.indices[helper.trim($this.attr('step-index').split(',')[0])]);
+                }, false);
+                dom.addEventListener('mouseenter', function (event) {
+                    var $this = $$(event.target);
+                    $this.addClass('fairy-hover');
+                }, false);
+                dom.addEventListener('mouseleave', function (event) {
+                    var $this = $$(event.target);
+                    $this.removeClass('fairy-hover');
+                }, false);
+            };
+
+            helper.log('add drag event.');
+            this.root.doms[0].addEventListener('mousedown', function (event) {
+                apis.drag.start = true;
+            }, false);
+            this.root.doms[0].addEventListener('mouseup', function (event) {
+                apis.drag.start = apis.drag.ing = false;
+                $$(apis.root).removeClass('fairy-dragging');
+            }, false);
+            this.root.doms[0].addEventListener('mousemove', function (event) {
+                if (apis.drag.start) {
+                    $$(apis.root).addClass('fairy-dragging');
+                    event.preventDefault();
+                    apis.drag.ing = true;
+                    var dx = event.clientX - apis.drag.position.X;
+                    var dy = event.clientY - apis.drag.position.Y;
+                    apis.data.currentTrans.X += dx;
+                    apis.data.currentTrans.Y += dy;
+                    apis.goto(apis.data.currentTrans);
+                };
+                apis.drag.position.X = event.clientX;
+                apis.drag.position.Y = event.clientY;
+            }, false);
+            helper.log('add scroll event.');
+            var scroll = function (event) {
+                event.preventDefault();
+                var d;
+                if (event.wheelDelta) {
+                    d = event.wheelDelta;
+                } else if (event.detail) {
+                    d = event.detail;
+                };
+                if (d > 0) {
+                    apis.data.currentTrans.Z += 100;
+                } else {
+                    apis.data.currentTrans.Z -= 100;
+                };
+                apis.goto(apis.data.currentTrans);
+            };
+            // firefox
+            this.root.doms[0].addEventListener('DOMMouseScroll', scroll, false);
+            this.root.doms[0].onmousewheel = scroll;
+        }
+    }, true, function(apis, newapis, fnName) {
+        apis._[fnName] = apis[fnName];
+    });
+
+ })(fairy, document, window)
