@@ -7,7 +7,7 @@
  *
  * ------------------------------------------------
  *  author:  Xu Xiaomeng
- *  version: 0.2.0
+ *  version: 0.3.0
  *  source:  github.com/sekaiamber/fairy.js
  */
 (function (document, window) {
@@ -177,6 +177,7 @@
         + '#fairy .fairy-camera{position:absolute;left:50%;top:50%;}';
 
     function transData() {
+        this.transData = true;
         this.X = 0;
         this.Y = 0;
         this.Z = 0;
@@ -372,66 +373,18 @@
             scale: 0.9,
             perspective: 1000,
             transitionDuration: 1000,
-            current: -1,
+            current: 0,
             root: '#fairy'
         },
         presentation: [],
         indices: {},
         staticApis: [
-            'init', 'support', 'make'
+            'init', 'support'
         ],
         steps: null,
         events: {},
         stepEnterTimeout: null,
-        // `make` mode is to allow user to make presentation WYSIWYG.
-        make: function(opts) {
-            if (!this.support()) {
-                throw new Error("[fairy.js]: Your broswer is not support fairy.");
-            };
-            // init data
-            this._initData(opts);
-            // add css
-            var css = document.createElement('style');
-            if (css.styleSheet) {
-                css.styleSheet.cssText = _css;
-            } else {
-                css.appendChild(document.createTextNode(_css));
-            };
-            document.getElementsByTagName('head')[0].appendChild(css);
-            // set root
-            this.root = $$(this.data.root).first();
-            this.root.css('overflow', 'auto');
-            // set canvas
-            this.canvas = document.createElement("div");
-            this.canvas.className = 'fairy-canvas';
-            // set camera
-            this.camera = document.createElement("div");
-            this.camera.className = 'fairy-camera';
-            // append canvas to camera, append camera to root
-            this.root.doms[0].appendChild(this.camera);
-            this.camera.appendChild(this.canvas);
-            this.camera = $$(this.camera);
-            this.canvas = $$(this.canvas);
-            // css
-            var orignCss = helper.getSpecificCss('transform-origin', 'left top 0px');
-            this.canvas.css(orignCss);
-            this.camera.css(orignCss);
-            var transStyleCss = helper.getSpecificCss('transform-style', 'preserve-3d');
-            this.canvas.css(transStyleCss);
-            this.camera.css(transStyleCss);
-            this.steps = $$('.fairy-step');
-            this.steps.each(function(i) {
-                var $this = $$(this);
-                var si = Number($this.attr('step-index'));
-                if (isNaN(si)) {
-                    throw new Error("[fairy.js]: `step-index` should be a number.");
-                };
-                apis.canvas.doms[0].appendChild(this);
-                $this.css(transStyleCss);
-            });
-            var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(this.data.perspective, 1));
-            this.camera.css(cameraCss);
-        },
+        cssstr: _css,
         init: function(opts) {
             if (!this.support()) {
                 throw new Error("[fairy.js]: Your broswer is not support fairy.");
@@ -441,9 +394,9 @@
             // add css
             var css = document.createElement('style');
             if (css.styleSheet) {
-                css.styleSheet.cssText = _css;
+                css.styleSheet.cssText = this.cssstr;
             } else {
-                css.appendChild(document.createTextNode(_css));
+                css.appendChild(document.createTextNode(this.cssstr));
             };
             document.getElementsByTagName('head')[0].appendChild(css);
             // set root
@@ -547,49 +500,59 @@
                 this.goto(current);
             }
         },
-        goto: function(index) {
-            var dom = this.presentation[index].dom;
-            var trans = this.presentation[index].trans.clone();
-            // negative the transform
-            trans.X = 0 - trans.X;
-            trans.Y = 0 - trans.Y;
-            trans.Z = 0 - trans.Z;
-            trans.rX = 0 - trans.rX;
-            trans.rY = 0 - trans.rY;
-            trans.rZ = 0 - trans.rZ;
+        goto: function(trans) {
+            var index = null;
+            if (typeof trans === 'number') {
+                index = trans;
+            }
+            if (index != null) {
+                var dom = this.presentation[index].dom;
+                trans = this.presentation[index].trans.clone();
+                // negative the transform
+                trans.X = 0 - trans.X;
+                trans.Y = 0 - trans.Y;
+                trans.Z = 0 - trans.Z;
+                trans.rX = 0 - trans.rX;
+                trans.rY = 0 - trans.rY;
+                trans.rZ = 0 - trans.rZ;
+            };
             var canvasCss = helper.getSpecificCss('transform', helper.getTransformString(trans, true));
             this.canvas.css(canvasCss);
-            // calculate the perspective and scale
-            var scaling = Math.min(this.data.width * this.data.scale / dom.outerWidth(), this.data.height * this.data.scale / dom.outerHeight(), 1);
-            var p = trans.perspective / scaling;
-            var s = this.data.perspective / p;
-            var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(p, s));
+            if (index != null) {
+                // calculate the perspective and scale
+                var scaling = Math.min(this.data.width * this.data.scale / dom.outerWidth(), this.data.height * this.data.scale / dom.outerHeight(), 1);
+                trans.perspective = trans.perspective / scaling;
+                trans.scale = this.data.perspective / trans.perspective;
+            };
+            var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(trans.perspective, trans.scale));
             this.camera.css(cameraCss);
+            this.data.currentTrans = trans;
 
-            // class
-            dom.addClass('showed');
-            this.steps.removeClass('current');
-            dom.addClass('current');
-            for (var i = 0; i < this.presentation.length; i++) {
-                var id = 'fairy-on-' + this.presentation[i].id;
-                this.root.removeClass(id);
-            };
-            if (this.presentation[index].id) {
-                this.root.addClass('fairy-on-' + this.presentation[index].id);
-            };
-            window.clearTimeout(this.stepEnterTimeout);
-            this.stepEnterTimeout = window.setTimeout(function() {
-                apis.steps.removeClass('trans-finish');
-                apis.presentation[apis.data.current].dom.addClass('trans-finish');
-            }, this.data.transitionDuration);
-
-            
-            // event
-            if (this.events[this.presentation[index].event]) {
-                this.events[this.presentation[index].event](dom.doms[0]);
-            };
-            if (this.events.change) {
-                this.events.change(dom.doms[0], this.presentation[index].index);
+            if (index != null) {
+                // class
+                dom.addClass('showed');
+                this.steps.removeClass('current');
+                dom.addClass('current');
+                for (var i = 0; i < this.presentation.length; i++) {
+                    var id = 'fairy-on-' + this.presentation[i].id;
+                    this.root.removeClass(id);
+                };
+                if (this.presentation[index].id) {
+                    this.root.addClass('fairy-on-' + this.presentation[index].id);
+                };
+                window.clearTimeout(this.stepEnterTimeout);
+                this.stepEnterTimeout = window.setTimeout(function() {
+                    apis.steps.removeClass('trans-finish');
+                    apis.presentation[apis.data.current].dom.addClass('trans-finish');
+                }, this.data.transitionDuration);
+                
+                // event
+                if (this.events[this.presentation[index].event]) {
+                    this.events[this.presentation[index].event](dom.doms[0]);
+                };
+                if (this.events.change) {
+                    this.events.change(dom.doms[0], this.presentation[index].index);
+                };
             };
         },
         support: function() {
@@ -681,6 +644,10 @@
             throw new Error("[fairy.js]: No such api named '" + api + "'.");
         };
     };
+
+    fairy.apis = apis;
+    fairy.helper = helper;
+    fairy._selector = $$;
 
     window.fairy = fairy;
 })(document, window)

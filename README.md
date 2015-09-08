@@ -28,6 +28,11 @@ Make a pull request, take it easy :)
 
 ## Change log
 
+### v0.3.0
+
+* separate `make` mode.
+* create fairy.maker.js.
+
 ### v0.2.0
 
 * support `.min` file, using uglifyJs to compress fairy.js.
