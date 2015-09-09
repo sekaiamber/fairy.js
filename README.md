@@ -28,6 +28,10 @@ Make a pull request, take it easy :)
 
 ## Change log
 
+### v0.3.1
+
+* add url change rule, now browser can remember the last transform when page is refresh.
+
 ### v0.3.0
 
 * separate `make` mode.
