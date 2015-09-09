@@ -36,6 +36,32 @@
             if (console && console.log)
                 for (var i = 0; i < arguments.length; i++)
                     console.log('[fairy.js]: ' + arguments[i]);
+        },
+        getUrl: function(index, trans) {
+            return index + ',' + trans.X + ',' + trans.Y + ',' + trans.Z + ',' + trans.rX + ',' + trans.rY + ',' + trans.rZ + ',' + trans.scale + ',' + trans.perspective;
+        },
+        upsetFromUrl: function(anchor) {
+            if (anchor) {} else {
+                anchor = window.location.href.split("#")[1];
+                if (anchor) {
+                    anchor = anchor.split('(')[1].split(')')[0].split(',');  
+                };
+            };
+            apis.data.current = parseInt(anchor[0]);
+            apis.data.currentTrans.X = parseInt(anchor[1]);
+            apis.data.currentTrans.Y = parseInt(anchor[2]);
+            apis.data.currentTrans.Z = parseInt(anchor[3]);
+            apis.data.currentTrans.rX = parseInt(anchor[4]);
+            apis.data.currentTrans.rY = parseInt(anchor[5]);
+            apis.data.currentTrans.rZ = parseInt(anchor[6]);
+            apis.data.currentTrans.scale = parseInt(anchor[7]);
+            apis.data.currentTrans.perspective = parseInt(anchor[8]);
+        },
+        changeUrl: function(index, trans) {
+            var anchor = this.getUrl(index, trans);
+            var url = window.location.href.split("#")[0];
+            url += '#(' + anchor + ')';
+            window.location.href = url;
         }
     });
 
@@ -52,6 +78,7 @@
         },
         init: function(opts) {
             helper.log('You are using fairy.maker.js.', 'welcome :)');
+            var anchor = window.location.href.split("#")[1];
             this._.init.call(this, opts);
 
             helper.log('disable transition.');
@@ -60,6 +87,27 @@
             this.camera.css(transitionCss);
 
             this._initMakerData(opts);
+
+            // upsetUrl
+            if (anchor) {
+                // events and index
+                anchor = anchor.split('(')[1].split(')')[0].split(',');
+                helper.upsetFromUrl(anchor);
+                this.goto(apis.data.current);
+                // canvas and camera
+                helper.upsetFromUrl(anchor);
+                this.goto(apis.data.currentTrans);
+            };
+        },
+        goto: function(trans, updateUrl) {
+            updateUrl = updateUrl || true;
+            this._.goto.call(this, trans);
+            if (updateUrl) {
+                helper.changeUrl(apis.data.current, apis.data.currentTrans);
+            };
+        },
+        start: function() {
+            this.goto(apis.data.currentTrans);
         },
         _initMakerData: function(opts) {
             helper.log('add step event.');
@@ -74,7 +122,8 @@
                         target = target.parentNode;
                     };
                     var $this = $$(target);
-                    apis.goto(apis.indices[helper.trim($this.attr('step-index').split(',')[0])]);
+                    apis.data.current = apis.indices[helper.trim($this.attr('step-index').split(',')[0])];
+                    apis.goto(apis.data.current);
                 }, false);
                 dom.addEventListener('mouseenter', function (event) {
                     var $this = $$(event.target);
