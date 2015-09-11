@@ -28,6 +28,10 @@ Make a pull request, take it easy :)
 
 ## Change log
 
+### v0.3.2
+
+* add support for `.fairy-element`, this dom will be inited but not into presentations.
+
 ### v0.3.1
 
 * add url change rule, now browser can remember the last transform when page is refresh.
