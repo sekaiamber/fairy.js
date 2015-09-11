@@ -7,7 +7,7 @@
  *
  * ------------------------------------------------
  *  author:  Xu Xiaomeng
- *  version: 0.3.1
+ *  version: 0.3.2
  *  source:  github.com/sekaiamber/fairy.js
  */
 (function (document, window) {
@@ -174,7 +174,9 @@
     // css
     var _css = '#fairy{overflow:hidden;position:relative;margin:0;padding:0;height:100%;width:100%;}'
         + '#fairy .fairy-canvas{position:relative;}'
-        + '#fairy .fairy-camera{position:absolute;left:50%;top:50%;}';
+        + '#fairy .fairy-camera{position:absolute;left:50%;top:50%;}'
+        + '#fairy .fairy-step{position: absolute;}'
+        + '#fairy .fairy-element{position: absolute;}';
 
     function transData() {
         this.transData = true;
@@ -416,7 +418,7 @@
                     sia[i] = Number(helper.trim(sia[i]));
                     if (isNaN(sia[i])) {
                         throw new Error("[fairy.js]: `step-index` should be a number.");
-                    };    
+                    };
                 };
                 apis.canvas.appendChild(this);
                 for (var i = 0; i < sia.length; i++) {
@@ -466,6 +468,14 @@
                     this.presentation[this.indices[this.presentation[i].same[j]]].trans = trans;
                 };
             };
+            // deal with fairy-element
+            var elems = $$('.fairy-element');
+            elems.each(function(){
+                apis.canvas.doms[0].appendChild(this);
+                var $this = $$(this);
+                $this.css(transStyleCss);
+                helper.buildItemCss($this);
+            });
             // goto 1st presentation
             this.goto(0);
             // then set `transition`
