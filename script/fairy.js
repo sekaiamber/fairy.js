@@ -350,9 +350,18 @@
             trans.rZ = Math.round(rotate.Z);
             return trans;
         },
+        readDomScale: function(dom, trans) {
+            dom = $$(dom);
+            var value = dom.attr('fairy-scale');
+            if (value) {
+                trans.scale = Number(value);
+            }
+            return trans;
+        },
         buildItemCss: function(dom) {
             var trans = new helper.readDomTransform(dom);
-            var css = 'translate(-50%, -50%) ' + helper.getTransformString(trans) + ' scale(1)';
+            trans = helper.readDomScale(dom, trans);
+            var css = 'translate(-50%, -50%) ' + helper.getTransformString(trans) + ' scale(' + trans.scale + ')';
             css = helper.getSpecificCss('transform', css);
             dom.css('position', 'absolute');
             dom.css('left', '0px');
@@ -479,7 +488,7 @@
             // goto 1st presentation
             this.goto(0);
             // then set `transition`
-            var transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out');
+            var transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out 0ms');
             this.canvas.css(transitionCss);
             this.camera.css(transitionCss);
             // we set `inited` to `true`
@@ -525,6 +534,8 @@
                 trans.rX = 0 - trans.rX;
                 trans.rY = 0 - trans.rY;
                 trans.rZ = 0 - trans.rZ;
+                trans.scale = 1 / trans.scale;
+                trans.perspective = this.data.perspective / trans.scale;
             };
             var canvasCss = helper.getSpecificCss('transform', helper.getTransformString(trans, true));
             this.canvas.css(canvasCss);
@@ -533,6 +544,9 @@
                 var scaling = Math.min(this.data.width * this.data.scale / dom.outerWidth(), this.data.height * this.data.scale / dom.outerHeight(), 1);
                 trans.perspective = trans.perspective / scaling;
                 trans.scale = this.data.perspective / trans.perspective;
+                if (dom.hasClass('text1')) {
+                    console.log(trans, trans.scale);
+                }
             };
             var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(trans.perspective, trans.scale));
             this.camera.css(cameraCss);
