@@ -84,11 +84,11 @@ body
     top: 1500px;
     width: 900px;
     height: 240px;
-    -webkit-transform: translate3d(0px,0,2000px);
-    -moz-transform: translate3d(0px,0,2000px);
-    -ms-transform: translate3d(0px,0,2000px);
-    -o-transform: translate3d(0px,0,2000px);
-    transform: translate3d(0px,0,2000px);
+    -webkit-transform: translate3d(0px,0,2000px) scale(2);
+    -moz-transform: translate3d(0px,0,2000px) scale(2);
+    -ms-transform: translate3d(0px,0,2000px) scale(2);
+    -o-transform: translate3d(0px,0,2000px) scale(2);
+    transform: translate3d(0px,0,2000px) scale(2);
 }
 .text1 span
 {
