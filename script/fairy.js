@@ -350,9 +350,18 @@
             trans.rZ = Math.round(rotate.Z);
             return trans;
         },
+        readDomScale: function(dom, trans) {
+            dom = $$(dom);
+            var value = dom.attr('fairy-scale');
+            if (value) {
+                trans.scale = Number(value);
+            }
+            return trans;
+        },
         buildItemCss: function(dom) {
             var trans = new helper.readDomTransform(dom);
-            var css = 'translate(-50%, -50%) ' + helper.getTransformString(trans) + ' scale(1)';
+            trans = helper.readDomScale(dom, trans);
+            var css = 'translate(-50%, -50%) ' + helper.getTransformString(trans) + ' scale(' + trans.scale + ')';
             css = helper.getSpecificCss('transform', css);
             dom.css('position', 'absolute');
             dom.css('left', '0px');
@@ -372,9 +381,11 @@
         data: {
             width: 1024,
             height: 768,
-            scale: 0.9,
+            suitableWidth: 0.9,
             perspective: 1000,
+            scale: 1,
             transitionDuration: 1000,
+            scaleChangeTransitionDelay: 500,
             current: 0,
             root: '#fairy'
         },
@@ -477,12 +488,7 @@
                 helper.buildItemCss($this);
             });
             // goto 1st presentation
-            this.goto(0);
-            // then set `transition`
-            var transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out');
-            this.canvas.css(transitionCss);
-            this.camera.css(transitionCss);
-            // we set `inited` to `true`
+            this.goto(0, true);
             this.inited = true;
         },
         start: function(current) {
@@ -510,7 +516,7 @@
                 this.goto(current);
             }
         },
-        goto: function(trans) {
+        goto: function(trans, noTransitionChange) {
             var index = null;
             if (typeof trans === 'number') {
                 index = trans;
@@ -525,17 +531,42 @@
                 trans.rX = 0 - trans.rX;
                 trans.rY = 0 - trans.rY;
                 trans.rZ = 0 - trans.rZ;
+                trans.scale = 1 / trans.scale;
+                trans.perspective = this.data.perspective / trans.scale;
             };
+            // change transition when scale changes
+            var transitionCss = helper.getSpecificCss('transition', '');
+            if (noTransitionChange) {
+                this.canvas.css(transitionCss);
+                this.camera.css(transitionCss);
+            } else {
+                if (this.data.scale === trans.scale) {
+                    transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out 0ms');
+                    this.canvas.css(transitionCss);
+                    this.camera.css(transitionCss);
+                } else if (this.data.scale > trans.scale) {
+                    transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out ' + this.data.scaleChangeTransitionDelay + 'ms');
+                    this.canvas.css(transitionCss);
+                    transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out 0ms');
+                    this.camera.css(transitionCss);
+                } else if (this.data.scale < trans.scale) {
+                    transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out ' + this.data.scaleChangeTransitionDelay + 'ms');
+                    this.camera.css(transitionCss);
+                    transitionCss = helper.getSpecificCss('transition', 'all ' + this.data.transitionDuration + 'ms ease-in-out 0ms');
+                    this.canvas.css(transitionCss);
+                }
+            }
             var canvasCss = helper.getSpecificCss('transform', helper.getTransformString(trans, true));
             this.canvas.css(canvasCss);
             if (index != null) {
                 // calculate the perspective and scale
-                var scaling = Math.min(this.data.width * this.data.scale / dom.outerWidth(), this.data.height * this.data.scale / dom.outerHeight(), 1);
+                var scaling = Math.min(this.data.width * this.data.suitableWidth / dom.outerWidth(), this.data.height * this.data.suitableWidth / dom.outerHeight(), 1);
                 trans.perspective = trans.perspective / scaling;
                 trans.scale = this.data.perspective / trans.perspective;
             };
             var cameraCss = helper.getSpecificCss('transform', helper.getCameraCssValue(trans.perspective, trans.scale));
             this.camera.css(cameraCss);
+            this.data.scale = trans.scale;
             this.data.currentTrans = trans;
 
             if (index != null) {

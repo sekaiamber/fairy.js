@@ -1,18 +1,20 @@
 # fairy.js
 
+Version v0.4.1 (maker version v0.3.2)
+
 ## Introduction
 
 It's a presentation framework based on the power of CSS3 transforms and transitions in modern browsers and inspired by the idea behind prezi.com.
 
 ## Version
 
-version is built in this format: vx.y[.z]
-
-x: API version changed, tech stack changed.
-
-y: New feature/api introduced, Code architecture changed.
-
+version is built in this format: vx.y[.z]  
+  
+x: API version changed, tech stack changed.  
+y: New feature/api introduced, Code architecture changed.  
 z: bug fixed, small feature/improvment.
+
+maker version is the version of `fairy.maker.js`, usually it is equal or 1 version behind `fairy.js`.
 
 ## Who can commit
 
@@ -27,6 +29,11 @@ You can just fork this project. Or raise a [issue](https://github.com/sekaiamber
 Make a pull request, take it easy :)
 
 ## Change log
+
+### v0.4.0
+
+* add scale change for each step, now user can use `scale` in `transform` css, and mark it with `fairy-scale` attribute in html file.
+* when scale changes, some control css will also change to given a better visual effect. (e.g. when move from a small scale element to a bigger one, the camera will zoom first and move to target position with a small delay)
 
 ### v0.3.2
 
@@ -59,6 +66,6 @@ Make a pull request, take it easy :)
 
 ## LICENSE
 
-Copyright 2015 Xu Xiaomeng(@sekaiamber)
+Copyright 2015-2016 Xu Xiaomeng(@sekaiamber)
 
 Released under the MIT and GPL (version 2 or later) Licenses.
