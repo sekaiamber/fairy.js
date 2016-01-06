@@ -1,13 +1,13 @@
 /**
  * fairy.js
  *
- * Copyright 2015 Xu Xiaomeng(@sekaiamber)
+ * Copyright 2015-2016 Xu Xiaomeng(@sekaiamber)
  *
  * Released under the MIT and GPL Licenses.
  *
  * ------------------------------------------------
  *  author:  Xu Xiaomeng
- *  version: 0.3.2
+ *  version: 0.4.1
  *  source:  github.com/sekaiamber/fairy.js
  */
 (function (document, window) {
