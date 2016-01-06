@@ -28,7 +28,20 @@ You can just fork this project. Or raise a [issue](https://github.com/sekaiamber
 
 Make a pull request, take it easy :)
 
+## Optimization
+
+I use [uglifyjs](https://github.com/mishoo/UglifyJS2) for my javascript compression, using following command to do it , make sure uglifyjs is installed in your computer:
+
+```shell
+$ cd path/to/repo/script/
+$ uglifyjs fairy.js -m -o fairy.min.js
+```
+
 ## Change log
+
+### v0.4.1
+
+* update README for optimization information.
 
 ### v0.4.0
 
